@@ -727,6 +727,10 @@ require('lazy').setup({
         'css-lsp',
         'tailwindcss-language-server',
         'css-variables-language-server',
+        'dockerfile-language-server',
+        'docker-compose-language-service',
+        'terraform',
+        'terraform-ls',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
