@@ -1030,6 +1030,12 @@ require('lazy').setup({
       },
     },
   },
+  -- :DiffviewOpen
+  -- :DiffviewClose
+  -- :DiffviewFileHistory
+  {
+    'sindrets/diffview.nvim',
+  },
 
   -- {
   --   'yetone/avante.nvim',
