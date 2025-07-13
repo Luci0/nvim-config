@@ -244,6 +244,10 @@ rtp:prepend(lazypath)
 --  To update plugins you can run
 --    :Lazy update
 --
+-- Custom stuff here
+vim.keymap.set('n', '<leader>ex', vim.cmd.Ex)
+
+--
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
@@ -429,10 +433,11 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
+      vim.keymap.set('n', '<leader>sq', builtin.git_files, { desc = '[S]earch by grep in [G]it files' })
+      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [g]rep' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
@@ -715,7 +720,13 @@ require('lazy').setup({
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
+        'stylua',
+        'typescript-language-server',
+        'biome',
+        'html-lsp',
+        'css-lsp',
+        'tailwindcss-language-server',
+        'css-variables-language-server',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -963,7 +974,108 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
-
+  {
+    'debugloop/telescope-undo.nvim',
+    dependencies = { -- note how they're inverted to above example
+      {
+        'nvim-telescope/telescope.nvim',
+        dependencies = { 'nvim-lua/plenary.nvim' },
+      },
+    },
+    keys = {
+      { -- lazy style key map
+        '<leader>u',
+        '<cmd>Telescope undo<cr>',
+        desc = 'undo history',
+      },
+    },
+    opts = {
+      -- don't use `defaults = { }` here, do this in the main telescope spec
+      extensions = {
+        undo = {
+          -- telescope-undo.nvim config, see below
+        },
+        -- no other extensions here, they can have their own spec too
+      },
+    },
+    config = function(_, opts)
+      -- Calling telescope's setup from multiple specs does not hurt, it will happily merge the
+      -- configs for us. We won't use data, as everything is in it's own namespace (telescope
+      -- defaults, as well as each extension).
+      require('telescope').setup(opts)
+      require('telescope').load_extension 'undo'
+    end,
+  },
+  {
+    'supermaven-inc/supermaven-nvim',
+    config = function()
+      require('supermaven-nvim').setup {}
+    end,
+  },
+  {
+    'yetone/avante.nvim',
+    -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+    -- ⚠️ must add this setting! ! !
+    build = function()
+      -- conditionally use the correct build system for the current OS
+      if vim.fn.has 'win32' == 1 then
+        return 'powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false'
+      else
+        return 'make'
+      end
+    end,
+    event = 'VeryLazy',
+    version = false, -- Never set this value to "*"! Never!
+    ---@module 'avante'
+    ---@type avante.Config
+    opts = {
+      provider = 'ollama',
+      providers = {
+        ollama = {
+          endpoint = 'http://127.0.0.1:11434', -- Note that there is no /v1 at the end.
+          model = 'deepseek-r1:32b',
+        },
+      },
+    },
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
+      --- The below dependencies are optional,
+      'echasnovski/mini.pick', -- for file_selector provider mini.pick
+      'nvim-telescope/telescope.nvim', -- for file_selector provider telescope
+      'hrsh7th/nvim-cmp', -- autocompletion for avante commands and mentions
+      'ibhagwan/fzf-lua', -- for file_selector provider fzf
+      'stevearc/dressing.nvim', -- for input provider dressing
+      'folke/snacks.nvim', -- for input provider snacks
+      'nvim-tree/nvim-web-devicons', -- or echasnovski/mini.icons
+      'zbirenbaum/copilot.lua', -- for providers='copilot'
+      {
+        -- support for image pasting
+        'HakonHarnes/img-clip.nvim',
+        event = 'VeryLazy',
+        opts = {
+          -- recommended settings
+          default = {
+            embed_image_as_base64 = false,
+            prompt_for_file_name = false,
+            drag_and_drop = {
+              insert_mode = true,
+            },
+            -- required for Windows users
+            use_absolute_path = true,
+          },
+        },
+      },
+      {
+        -- Make sure to set this up properly if you have lazy=true
+        'MeanderingProgrammer/render-markdown.nvim',
+        opts = {
+          file_types = { 'markdown', 'Avante' },
+        },
+        ft = { 'markdown', 'Avante' },
+      },
+    },
+  },
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
