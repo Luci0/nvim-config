@@ -76,3 +76,14 @@ for i = 1, 3 do
     toggle_terminal(i)
   end, { desc = 'Toggle Floating Terminal ' .. i })
 end
+
+local function close_all_terminals()
+  for _, term in pairs(state.floating) do
+    if vim.api.nvim_win_is_valid(term.win) then
+      vim.api.nvim_win_hide(term.win)
+    end
+  end
+end
+
+vim.api.nvim_create_user_command('FloaterminalCloseAll', close_all_terminals, {})
+vim.keymap.set({ 'n', 't' }, '<leader>tt', close_all_terminals, { desc = 'Close all floating terminals' })
