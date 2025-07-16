@@ -6,7 +6,7 @@ return {
   version = '*',
   dependencies = {
     'nvim-lua/plenary.nvim',
-    'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
+    'nvim-tree/nvim-web-devicons',
     'MunifTanjim/nui.nvim',
   },
   lazy = false,
@@ -15,9 +15,15 @@ return {
   },
   opts = {
     filesystem = {
+      filtered_items = {
+        visible = true, -- Show all filtered items
+        hide_dotfiles = false, -- Show dotfiles
+        hide_gitignored = false, -- Optional: show gitignored files
+      },
       window = {
         mappings = {
           ['\\'] = 'close_window',
+          ['-'] = 'navigate_up', -- Optional: adds manual parent dir nav
         },
       },
     },
